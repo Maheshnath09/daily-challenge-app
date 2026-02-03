@@ -40,6 +40,14 @@ class Settings(BaseSettings):
                 return [origin.strip() for origin in v.split(',')]
         return v
     
+    @field_validator('DATABASE_URL', mode='before')
+    @classmethod
+    def fix_database_url(cls, v: str) -> str:
+        """Fix postgres:// scheme for SQLAlchemy compatibility."""
+        if v and v.startswith("postgres://"):
+            return v.replace("postgres://", "postgresql+asyncpg://", 1)
+        return v
+    
     class Config:
         env_file = ".env"
         extra = "allow"
