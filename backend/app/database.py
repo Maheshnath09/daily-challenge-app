@@ -8,10 +8,18 @@ from app.config import settings
 
 
 # Create async engine
+engine_args = {
+    "echo": settings.DEBUG,
+    "future": True,
+}
+
+# Add SSL for production (Render/Neon)
+if not settings.DEBUG:
+    engine_args["connect_args"] = {"ssl": "require"}
+
 engine = create_async_engine(
     settings.DATABASE_URL,
-    echo=settings.DEBUG,
-    future=True,
+    **engine_args
 )
 
 # Create async session factory

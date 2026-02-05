@@ -61,7 +61,14 @@ class Settings(BaseSettings):
             return v.replace("postgres://", "postgresql+asyncpg://", 1)
         # Handle postgresql:// without async driver (common from Neon)
         if v.startswith("postgresql://") and "+asyncpg" not in v:
-            return v.replace("postgresql://", "postgresql+asyncpg://", 1)
+            v = v.replace("postgresql://", "postgresql+asyncpg://", 1)
+            
+        # Remove sslmode query param if present (asyncpg doesn't support it in URL)
+        if "?" in v and "sslmode=" in v:
+            base_url, query = v.split("?", 1)
+            query_params = [q for q in query.split("&") if not q.startswith("sslmode=")]
+            v = base_url + ("?" + "&".join(query_params) if query_params else "")
+            
         return v
     
     class Config:
