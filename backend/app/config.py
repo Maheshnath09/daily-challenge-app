@@ -48,9 +48,20 @@ class Settings(BaseSettings):
     @field_validator('DATABASE_URL', mode='before')
     @classmethod
     def fix_database_url(cls, v: str) -> str:
-        """Fix postgres:// scheme for SQLAlchemy compatibility."""
-        if v and v.startswith("postgres://"):
+        """Fix database URL scheme for SQLAlchemy async compatibility.
+        
+        Handles both:
+        - postgres:// (Heroku/Render style) -> postgresql+asyncpg://
+        - postgresql:// (Neon style without driver) -> postgresql+asyncpg://
+        """
+        if not v:
+            return v
+        # Handle postgres:// (common from Heroku/Render)
+        if v.startswith("postgres://"):
             return v.replace("postgres://", "postgresql+asyncpg://", 1)
+        # Handle postgresql:// without async driver (common from Neon)
+        if v.startswith("postgresql://") and "+asyncpg" not in v:
+            return v.replace("postgresql://", "postgresql+asyncpg://", 1)
         return v
     
     class Config:
